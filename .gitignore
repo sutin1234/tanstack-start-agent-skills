@@ -5,3 +5,6 @@
 # React Router
 /.react-router/
 /build/
+
+# opensrc - source code for packages
+opensrc/

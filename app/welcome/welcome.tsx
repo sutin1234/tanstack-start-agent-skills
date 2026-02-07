@@ -1,5 +1,14 @@
+import { Link } from "react-router";
 import logoDark from "./logo-dark.svg";
 import logoLight from "./logo-light.svg";
+
+// App routes for internal navigation
+const appRoutes = [
+  { to: "/users", text: "User Directory", icon: "👥", description: "Browse users from JSONPlaceholder API" },
+  { to: "/bitcoin", text: "Bitcoin Feed", icon: "₿", description: "Real-time Bitcoin prices" },
+  { to: "/gold", text: "Gold Prices", icon: "🥇", description: "Current gold market prices" },
+  { to: "/etf", text: "ETF Dashboard", icon: "📊", description: "ETF market overview" },
+];
 
 export function Welcome() {
   return (
@@ -19,6 +28,46 @@ export function Welcome() {
             />
           </div>
         </header>
+
+        {/* App Routes Navigation */}
+        <div className="max-w-[400px] w-full space-y-6 px-4">
+          <nav
+            className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4"
+            style={{
+              background: "linear-gradient(145deg, rgba(30, 30, 46, 0.8) 0%, rgba(24, 24, 36, 0.9) 100%)",
+              backdropFilter: "blur(12px)",
+            }}
+          >
+            <p className="leading-6 text-gray-200 text-center font-semibold text-lg">
+              🚀 Explore App
+            </p>
+            <ul className="space-y-2">
+              {appRoutes.map(({ to, text, icon, description }) => (
+                <li key={to}>
+                  <Link
+                    to={to}
+                    className="group flex items-center gap-3 self-stretch p-3 rounded-xl leading-normal text-gray-200 hover:bg-white/10 transition-all duration-200"
+                    style={{
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
+                  >
+                    <span className="text-2xl">{icon}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-blue-400 group-hover:text-blue-300">
+                        {text}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        {description}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        {/* External Resources */}
         <div className="max-w-[300px] w-full space-y-6 px-4">
           <nav className="rounded-3xl border border-gray-200 p-6 dark:border-gray-700 space-y-4">
             <p className="leading-6 text-gray-700 dark:text-gray-200 text-center">
@@ -87,3 +136,4 @@ const resources = [
     ),
   },
 ];
+

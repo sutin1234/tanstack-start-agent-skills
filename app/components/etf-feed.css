@@ -1,0 +1,459 @@
+/* ETF Feed Component Styles */
+.etf-feed {
+  --bg-gradient-start: #0a1628;
+  --bg-gradient-end: #1a2942;
+  --card-bg: rgba(59, 130, 246, 0.05);
+  --card-border: rgba(59, 130, 246, 0.15);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --accent-blue: #3b82f6;
+  --accent-blue-light: #60a5fa;
+  --accent-green: #10b981;
+  --accent-yellow: #fbbf24;
+  --accent-purple: #8b5cf6;
+  --shadow-color: rgba(59, 130, 246, 0.15);
+
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  border-radius: 24px;
+  padding: 2rem;
+  max-width: 900px;
+  margin: 2rem auto;
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 60px var(--shadow-color);
+  border: 1px solid var(--card-border);
+  backdrop-filter: blur(20px);
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Header */
+.etf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.etf-header .header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.etf-icon {
+  font-size: 2.5rem;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.etf-header .header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.etf-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.etf-header .header-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.avg-yield-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  padding: 0.5rem 0.75rem;
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 12px;
+}
+
+.avg-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.avg-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--accent-green);
+}
+
+.etf-feed .refresh-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.etf-feed .refresh-button:hover {
+  background: var(--accent-blue);
+  border-color: var(--accent-blue);
+  transform: rotate(180deg);
+}
+
+/* ETF Grid */
+.etf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ETF Card */
+.etf-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.etf-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent-blue), var(--accent-purple));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.etf-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-blue);
+  box-shadow: 0 12px 24px -8px var(--shadow-color);
+}
+
+.etf-card:hover::before {
+  opacity: 1;
+}
+
+/* Card Header */
+.etf-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.etf-symbol-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.etf-symbol {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--accent-blue-light);
+}
+
+.etf-name {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.etf-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.badge {
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.badge.high-yield {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--accent-green);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge.low-cost {
+  background: rgba(251, 191, 36, 0.15);
+  color: var(--accent-yellow);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+
+/* Stats */
+.etf-stats {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.stat-item.highlight {
+  background: rgba(16, 185, 129, 0.08);
+  padding: 0.5rem;
+  border-radius: 8px;
+  margin: -0.5rem;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-value.price {
+  color: var(--accent-blue-light);
+}
+
+.stat-value.yield {
+  color: var(--accent-green);
+  font-size: 1.1rem;
+}
+
+.stat-value.expense {
+  color: var(--accent-yellow);
+}
+
+/* Card Footer */
+.etf-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--card-border);
+}
+
+.frequency {
+  font-size: 0.7rem;
+  color: var(--accent-purple);
+  font-weight: 500;
+}
+
+.sector {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+/* Footer Info */
+.etf-footer-info {
+  padding-top: 1rem;
+  border-top: 1px solid var(--card-border);
+  text-align: center;
+}
+
+.etf-footer-info p {
+  margin: 0;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  opacity: 0.7;
+  line-height: 1.5;
+}
+
+/* Loading State */
+.etf-feed.loading {
+  min-height: 500px;
+}
+
+.etf-feed .skeleton {
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.05) 0%, rgba(59, 130, 246, 0.1) 50%, rgba(59, 130, 246, 0.05) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.etf-feed .skeleton-title {
+  width: 200px;
+  height: 32px;
+}
+
+.etf-feed .skeleton-badge {
+  width: 100px;
+  height: 40px;
+  border-radius: 12px;
+}
+
+.etf-feed .skeleton-card {
+  min-height: 180px;
+}
+
+.etf-feed .skeleton-header {
+  width: 70%;
+  height: 24px;
+  margin-bottom: 1rem;
+}
+
+.etf-feed .skeleton-stats {
+  width: 100%;
+  height: 60px;
+  margin-bottom: 1rem;
+}
+
+.etf-feed .skeleton-footer {
+  width: 60%;
+  height: 16px;
+}
+
+/* Error State */
+.etf-feed.error {
+  text-align: center;
+  padding: 3rem 2rem;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.etf-feed .error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.etf-feed.error h3 {
+  margin: 0 0 0.5rem;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.etf-feed.error p {
+  margin: 0 0 1.5rem;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.etf-feed .retry-button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+  border: none;
+  border-radius: 999px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.etf-feed .retry-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px var(--shadow-color);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .etf-feed {
+    margin: 1rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+  }
+
+  .etf-header {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .etf-header .header-status {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .etf-header h2 {
+    font-size: 1.25rem;
+  }
+
+  .etf-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .etf-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
