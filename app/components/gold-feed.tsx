@@ -1,73 +1,12 @@
 "use client";
 
-import useSWR from "swr";
-
-// Types for Gold API response
-interface GoldPrice {
-    buy: number;
-    sell: number;
-}
-
-interface GoldData {
-    time: number;
-    date: string;
-    updateTime: string;
-    prices: {
-        goldBar: GoldPrice;
-        goldOrnament: GoldPrice;
-    };
-    change: {
-        comparePrevious: string;
-        compareYesterday: string;
-    };
-}
-
-// Gold API URL
-const GOLD_API = "https://api.chnwt.dev/thai-gold-api/latest";
-
-// Parse price string to number (e.g., "74,200.00" -> 74200.00)
-function parsePrice(priceStr: string | undefined): number {
-    if (!priceStr) return 0;
-    return parseFloat(priceStr.replace(/,/g, "")) || 0;
-}
-
-// Fetcher function with error handling (js-early-exit pattern)
-const fetcher = async (url: string): Promise<GoldData> => {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch gold price");
-    }
-
-    const data = await response.json();
-
-    // Early exit if status is not success
-    if (data.status !== "success") {
-        throw new Error("API returned error status");
-    }
-
-    const { response: goldData } = data;
-
-    return {
-        time: Date.now(),
-        date: goldData.date || "",
-        updateTime: goldData.update_time || "",
-        prices: {
-            goldBar: {
-                buy: parsePrice(goldData.price?.gold_bar?.buy),
-                sell: parsePrice(goldData.price?.gold_bar?.sell),
-            },
-            goldOrnament: {
-                buy: parsePrice(goldData.price?.gold?.buy),
-                sell: parsePrice(goldData.price?.gold?.sell),
-            },
-        },
-        change: {
-            comparePrevious: goldData.price?.change?.compare_previous || "",
-            compareYesterday: goldData.price?.change?.compare_yesterday || "",
-        },
-    };
-};
+import { AlertCircle, TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
+import { useGoldPrice } from "~/hooks/useGoldPrice";
+import type { GoldData } from "~/services/gold.service";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Skeleton } from "~/components/ui/skeleton";
 
 // Format price - React 19 compiler handles optimization
 function formatPrice(price: number): string {
@@ -95,48 +34,59 @@ function GoldPriceCard({
     const spread = sellPrice - buyPrice;
 
     return (
-        <div className="gold-price-card">
-            <div className="gold-card-header">
-                <div className="gold-card-title">
-                    <span className="card-icon">{icon}</span>
-                    <div>
-                        <span className="gold-title">{title}</span>
-                        <span className="gold-subtitle">{subtitle}</span>
+        <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+                <div className="flex items-start gap-3">
+                    <span className="text-2xl">{icon}</span>
+                    <div className="flex-1">
+                        <CardTitle className="text-base">{title}</CardTitle>
+                        <CardDescription className="text-xs">{subtitle}</CardDescription>
                     </div>
                 </div>
-            </div>
-            <div className="gold-prices-row">
-                <div className="price-column">
-                    <span className="price-label">รับซื้อ</span>
-                    <span className="price-value buy">฿{formatPrice(buyPrice)}</span>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-3 gap-3">
+                    <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">รับซื้อ</div>
+                        <div className="text-lg font-bold">฿{formatPrice(buyPrice)}</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">ขายออก</div>
+                        <div className="text-lg font-bold text-primary">฿{formatPrice(sellPrice)}</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-xs text-muted-foreground mb-1">ส่วนต่าง</div>
+                        <div className="text-lg font-bold">฿{formatPrice(Math.abs(spread))}</div>
+                    </div>
                 </div>
-                <div className="price-column">
-                    <span className="price-label">ขายออก</span>
-                    <span className="price-value sell">฿{formatPrice(sellPrice)}</span>
-                </div>
-                <div className="price-column spread">
-                    <span className="price-label">ส่วนต่าง</span>
-                    <span className="price-value">฿{formatPrice(Math.abs(spread))}</span>
-                </div>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
 // Loading Skeleton Component
 function LoadingSkeleton() {
     return (
-        <div className="gold-feed loading">
-            <div className="gold-header">
-                <div className="skeleton skeleton-title" />
-                <div className="skeleton skeleton-badge" />
+        <div className="space-y-4 p-6 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-9 w-24" />
             </div>
-            <div className="gold-grid">
+            <div className="grid gap-4 md:grid-cols-2">
                 {[1, 2].map((i) => (
-                    <div key={i} className="gold-price-card skeleton-card">
-                        <div className="skeleton skeleton-label" />
-                        <div className="skeleton skeleton-price" />
-                    </div>
+                    <Card key={i}>
+                        <CardHeader>
+                            <Skeleton className="h-5 w-24 mb-2" />
+                            <Skeleton className="h-4 w-32" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="grid grid-cols-3 gap-3">
+                                <Skeleton className="h-6 w-16" />
+                                <Skeleton className="h-6 w-16" />
+                                <Skeleton className="h-6 w-16" />
+                            </div>
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         </div>
@@ -152,75 +102,80 @@ function ErrorDisplay({
     onRetry: () => void;
 }) {
     return (
-        <div className="gold-feed error">
-            <div className="error-icon">⚠️</div>
-            <h3>ไม่สามารถโหลดราคาทองได้</h3>
-            <p>{message}</p>
-            <button onClick={onRetry} className="retry-button">
-                ลองใหม่อีกครั้ง
-            </button>
+        <div className="flex items-center justify-center min-h-[300px] p-6">
+            <Card className="max-w-md w-full border-destructive/50 bg-destructive/5">
+                <CardHeader>
+                    <div className="flex gap-3">
+                        <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                        <div>
+                            <CardTitle className="text-destructive">ไม่สามารถโหลดราคาทองได้</CardTitle>
+                            <CardDescription>{message}</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={onRetry} variant="destructive" className="w-full">
+                        ลองใหม่อีกครั้ง
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     );
 }
 
 // Main Gold Feed Component
 export function GoldFeed() {
-    // SWR for data fetching with automatic deduplication (client-swr-dedup)
-    const { data, error, isLoading, mutate } = useSWR<GoldData>(
-        GOLD_API,
-        fetcher,
-        {
-            refreshInterval: 60000, // Refresh every 60 seconds
-            revalidateOnFocus: true,
-            dedupingInterval: 10000, // Dedupe requests within 10 seconds
-        }
-    );
+    const { data, error, isLoading, refetch } = useGoldPrice();
 
-    // Early return for loading state (js-early-exit)
+    // Loading state
     if (isLoading) {
         return <LoadingSkeleton />;
     }
 
-    // Early return for error state
+    // Error state
     if (error) {
-        return <ErrorDisplay message={error.message} onRetry={() => mutate()} />;
+        return <ErrorDisplay message={error.message} onRetry={() => refetch()} />;
     }
 
-    // Early return for no data
+    // No data state
     if (!data) {
         return <LoadingSkeleton />;
     }
 
     // Derived values - React 19 compiler optimizes automatically
     const isUp = data.change.compareYesterday === "+";
-    const changeIcon = isUp ? "▲" : "▼";
+    const changeIcon = isUp ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />;
     const changeText = isUp ? "ปรับขึ้น" : "ปรับลง";
 
     return (
-        <div className="gold-feed">
-            <div className="gold-header">
-                <div className="header-title">
-                    <span className="gold-icon">🥇</span>
-                    <div className="header-text">
-                        <h2>ราคาทองคำวันนี้</h2>
-                        <span className="date-info">{data.date}</span>
+        <div className="space-y-6 p-6 max-w-2xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl">🥇</span>
+                        <h2 className="text-3xl font-bold">ราคาทองคำวันนี้</h2>
                     </div>
+                    <p className="text-sm text-muted-foreground">{data.date}</p>
                 </div>
-                <div className="header-status">
-                    <span className={`status-badge ${isUp ? "up" : "down"}`}>
-                        {changeIcon} {changeText}
-                    </span>
-                    <button
-                        onClick={() => mutate()}
-                        className="refresh-button"
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <Badge variant={isUp ? "default" : "destructive"} className="w-fit">
+                        <span className="flex items-center gap-1">
+                            {changeIcon}
+                            {changeText}
+                        </span>
+                    </Badge>
+                    <Button
+                        onClick={() => refetch()}
+                        variant="outline"
+                        size="icon"
                         title="รีเฟรชราคา"
                     >
-                        ↻
-                    </button>
+                        <RotateCcw className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 
-            <div className="gold-grid">
+            <div className="grid gap-4 md:grid-cols-2">
                 <GoldPriceCard
                     title="ทองคำแท่ง"
                     subtitle="Gold Bar 96.5%"
@@ -237,9 +192,9 @@ export function GoldFeed() {
                 />
             </div>
 
-            <div className="gold-footer">
-                <div className="last-updated">อัปเดต: {data.updateTime}</div>
-                <div className="data-source">ข้อมูลจากสมาคมค้าทองคำ</div>
+            <div className="text-center space-y-1 text-xs text-muted-foreground">
+                <div>อัปเดต: {data.updateTime}</div>
+                <div>ข้อมูลจากสมาคมค้าทองคำ</div>
             </div>
         </div>
     );

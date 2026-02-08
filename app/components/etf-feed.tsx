@@ -1,95 +1,13 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { AlertCircle, RotateCcw } from "lucide-react";
+import { useETFData } from "~/hooks/useETFData";
+import type { ETFData } from "~/services/etf.service";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Skeleton } from "~/components/ui/skeleton";
 
-// Types for ETF data
-interface ETFData {
-    symbol: string;
-    name: string;
-    price: number;
-    dividendYield: number;
-    expenseRatio: number;
-    aum: string;
-    frequency: string;
-    sector: string;
-}
-
-// Top dividend ETFs data (static data since there's no free real-time API)
-const TOP_DIVIDEND_ETFS: ETFData[] = [
-    {
-        symbol: "SCHD",
-        name: "Schwab U.S. Dividend Equity ETF",
-        price: 82.45,
-        dividendYield: 3.52,
-        expenseRatio: 0.06,
-        aum: "$58.2B",
-        frequency: "Quarterly",
-        sector: "Dividend Growth",
-    },
-    {
-        symbol: "VYM",
-        name: "Vanguard High Dividend Yield ETF",
-        price: 118.32,
-        dividendYield: 2.91,
-        expenseRatio: 0.06,
-        aum: "$52.1B",
-        frequency: "Quarterly",
-        sector: "High Yield",
-    },
-    {
-        symbol: "HDV",
-        name: "iShares Core High Dividend ETF",
-        price: 108.76,
-        dividendYield: 3.78,
-        expenseRatio: 0.08,
-        aum: "$10.8B",
-        frequency: "Quarterly",
-        sector: "High Yield",
-    },
-    {
-        symbol: "JEPI",
-        name: "JPMorgan Equity Premium Income ETF",
-        price: 56.89,
-        dividendYield: 7.42,
-        expenseRatio: 0.35,
-        aum: "$33.5B",
-        frequency: "Monthly",
-        sector: "Covered Call",
-    },
-    {
-        symbol: "DIVO",
-        name: "Amplify CWP Enhanced Dividend Income",
-        price: 38.24,
-        dividendYield: 4.68,
-        expenseRatio: 0.55,
-        aum: "$3.2B",
-        frequency: "Monthly",
-        sector: "Covered Call",
-    },
-    {
-        symbol: "SPYD",
-        name: "SPDR Portfolio S&P 500 High Dividend",
-        price: 42.18,
-        dividendYield: 4.21,
-        expenseRatio: 0.07,
-        aum: "$7.1B",
-        frequency: "Quarterly",
-        sector: "High Yield",
-    },
-];
-
-// Simulate API fetch with slight delay
-async function fetchETFData(): Promise<ETFData[]> {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-
-    // Simulate random price fluctuations
-    return TOP_DIVIDEND_ETFS.map((etf) => ({
-        ...etf,
-        price: etf.price * (1 + (Math.random() - 0.5) * 0.02),
-        dividendYield: etf.dividendYield * (1 + (Math.random() - 0.5) * 0.01),
-    }));
-}
 
 // Format currency
 function formatCurrency(value: number): string {
@@ -110,60 +28,72 @@ function ETFCard({ etf }: { etf: ETFData }) {
     const isLowCost = etf.expenseRatio <= 0.1;
 
     return (
-        <div className="etf-card">
-            <div className="etf-card-header">
-                <div className="etf-symbol-info">
-                    <span className="etf-symbol">{etf.symbol}</span>
-                    <span className="etf-name">{etf.name}</span>
+        <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+                <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                        <CardTitle className="text-base">{etf.symbol}</CardTitle>
+                        <CardDescription className="text-xs">{etf.name}</CardDescription>
+                    </div>
+                    <div className="flex gap-2">
+                        {isHighYield && <Badge variant="default">High Yield</Badge>}
+                        {isLowCost && <Badge variant="secondary">Low Cost</Badge>}
+                    </div>
                 </div>
-                <div className="etf-badges">
-                    {isHighYield && <span className="badge high-yield">High Yield</span>}
-                    {isLowCost && <span className="badge low-cost">Low Cost</span>}
+            </CardHeader>
+            <CardContent className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                    <div>
+                        <div className="text-xs text-muted-foreground">Price</div>
+                        <div className="text-lg font-semibold">{formatCurrency(etf.price)}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs text-muted-foreground">Dividend Yield</div>
+                        <div className="text-lg font-semibold text-primary">{formatPercent(etf.dividendYield)}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs text-muted-foreground">Expense Ratio</div>
+                        <div className="text-sm">{formatPercent(etf.expenseRatio)}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs text-muted-foreground">AUM</div>
+                        <div className="text-sm">{etf.aum}</div>
+                    </div>
                 </div>
-            </div>
-
-            <div className="etf-stats">
-                <div className="stat-item">
-                    <span className="stat-label">Price</span>
-                    <span className="stat-value price">{formatCurrency(etf.price)}</span>
+                <div className="flex gap-2 pt-2 border-t">
+                    <Badge variant="outline" className="text-xs">{etf.frequency} Dividend</Badge>
+                    <Badge variant="outline" className="text-xs">{etf.sector}</Badge>
                 </div>
-                <div className="stat-item highlight">
-                    <span className="stat-label">Dividend Yield</span>
-                    <span className="stat-value yield">{formatPercent(etf.dividendYield)}</span>
-                </div>
-                <div className="stat-item">
-                    <span className="stat-label">Expense Ratio</span>
-                    <span className="stat-value expense">{formatPercent(etf.expenseRatio)}</span>
-                </div>
-                <div className="stat-item">
-                    <span className="stat-label">AUM</span>
-                    <span className="stat-value">{etf.aum}</span>
-                </div>
-            </div>
-
-            <div className="etf-footer">
-                <span className="frequency">{etf.frequency} Dividend</span>
-                <span className="sector">{etf.sector}</span>
-            </div>
-        </div>
+            </CardContent>
+        </Card>
     );
 }
 
 // Loading Skeleton
 function LoadingSkeleton() {
     return (
-        <div className="etf-feed loading">
-            <div className="etf-header">
-                <div className="skeleton skeleton-title" />
-                <div className="skeleton skeleton-badge" />
+        <div className="space-y-4 p-6 max-w-7xl mx-auto">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-9 w-32" />
             </div>
-            <div className="etf-grid">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {[1, 2, 3, 4, 5, 6].map((i) => (
-                    <div key={i} className="etf-card skeleton-card">
-                        <div className="skeleton skeleton-header" />
-                        <div className="skeleton skeleton-stats" />
-                        <div className="skeleton skeleton-footer" />
-                    </div>
+                    <Card key={i}>
+                        <CardHeader>
+                            <Skeleton className="h-5 w-24 mb-2" />
+                            <Skeleton className="h-4 w-32" />
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                                <Skeleton className="h-4 w-16" />
+                            </div>
+                            <Skeleton className="h-6 w-full" />
+                        </CardContent>
+                    </Card>
                 ))}
             </div>
         </div>
@@ -179,28 +109,30 @@ function ErrorDisplay({
     onRetry: () => void;
 }) {
     return (
-        <div className="etf-feed error">
-            <div className="error-icon">📉</div>
-            <h3>Failed to load ETF data</h3>
-            <p>{message}</p>
-            <button onClick={onRetry} className="retry-button">
-                Try Again
-            </button>
+        <div className="flex items-center justify-center min-h-[300px] p-6">
+            <Card className="max-w-md w-full border-destructive/50 bg-destructive/5">
+                <CardHeader>
+                    <div className="flex gap-3">
+                        <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                        <div>
+                            <CardTitle className="text-destructive">Failed to load ETF data</CardTitle>
+                            <CardDescription>{message}</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={onRetry} variant="destructive" className="w-full">
+                        Try Again
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     );
 }
 
 // Main ETF Feed Component
 export function ETFFeed() {
-    // TanStack Query for data fetching (client-tanstack-query pattern)
-    // No try...catch needed - error handling is automatic
-    const { data, error, isLoading, refetch } = useQuery({
-        queryKey: ["etf-dividends"],
-        queryFn: fetchETFData,
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        refetchInterval: 60 * 1000, // Refetch every minute
-        retry: 3,
-    });
+    const { data, error, isLoading, refetch } = useETFData();
 
     // Early return for loading (js-early-exit)
     if (isLoading) {
@@ -222,37 +154,42 @@ export function ETFFeed() {
     const avgYield = data.reduce((sum, etf) => sum + etf.dividendYield, 0) / data.length;
 
     return (
-        <div className="etf-feed">
-            <div className="etf-header">
-                <div className="header-title">
-                    <span className="etf-icon">💰</span>
-                    <div className="header-text">
-                        <h2>Top Dividend ETFs</h2>
-                        <span className="header-subtitle">Best yield dividend ETFs for passive income</span>
+        <div className="space-y-6 p-6 max-w-7xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl">💰</span>
+                        <h2 className="text-3xl font-bold">Top Dividend ETFs</h2>
                     </div>
+                    <p className="text-sm text-muted-foreground">Best yield dividend ETFs for passive income</p>
                 </div>
-                <div className="header-status">
-                    <div className="avg-yield-badge">
-                        <span className="avg-label">Avg Yield</span>
-                        <span className="avg-value">{formatPercent(avgYield)}</span>
-                    </div>
-                    <button
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    <Card className="w-fit">
+                        <CardContent className="px-4 py-2">
+                            <div className="text-center">
+                                <div className="text-xs text-muted-foreground">Avg Yield</div>
+                                <div className="text-lg font-bold text-primary">{formatPercent(avgYield)}</div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                    <Button
                         onClick={() => refetch()}
-                        className="refresh-button"
+                        variant="outline"
+                        size="icon"
                         title="Refresh data"
                     >
-                        ↻
-                    </button>
+                        <RotateCcw className="h-4 w-4" />
+                    </Button>
                 </div>
             </div>
 
-            <div className="etf-grid">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {sortedETFs.map((etf) => (
                     <ETFCard key={etf.symbol} etf={etf} />
                 ))}
             </div>
 
-            <div className="etf-footer-info">
+            <div className="text-center space-y-1 pt-4 text-xs text-muted-foreground">
                 <p>* Dividend yields are trailing 12-month yields and may vary</p>
                 <p>Data for educational purposes only. Not financial advice.</p>
             </div>

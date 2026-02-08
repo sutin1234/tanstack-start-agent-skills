@@ -1,41 +1,12 @@
 "use client";
 
-import useSWR from "swr";
-
-// Types for Bitcoin API response
-interface BitcoinPrice {
-    USD: { last: number; symbol: string };
-    EUR: { last: number; symbol: string };
-    THB: { last: number; symbol: string };
-}
-
-interface BitcoinData {
-    time: number;
-    prices: BitcoinPrice;
-}
-
-// Bitcoin API URL
-const BITCOIN_API = "https://blockchain.info/ticker";
-
-// Fetcher function with error handling
-const fetcher = async (url: string): Promise<BitcoinData> => {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch Bitcoin price");
-    }
-
-    const data = await response.json();
-
-    return {
-        time: Date.now(),
-        prices: {
-            USD: { last: data.USD?.last || 0, symbol: "$" },
-            EUR: { last: data.EUR?.last || 0, symbol: "€" },
-            THB: { last: data.THB?.last || 0, symbol: "฿" },
-        },
-    };
-};
+import { AlertCircle, RotateCcw } from "lucide-react";
+import { useBitcoinPrice } from "~/hooks/useBitcoinPrice";
+import type { BitcoinData } from "~/services/bitcoin.service";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Skeleton } from "~/components/ui/skeleton";
 
 // Format price - simple function, React 19 compiler handles optimization
 function formatPrice(price: number): string {
@@ -64,36 +35,52 @@ function PriceCard({
     symbol: string;
 }) {
     return (
-        <div className="price-card">
-            <div className="price-card-header">
-                <span className="currency-label">{currency}</span>
-                <span className="currency-symbol">{symbol}</span>
-            </div>
-            <div className="price-value">
-                {symbol}
-                {formatPrice(price)}
-            </div>
-        </div>
+        <Card className="hover:shadow-lg transition-shadow">
+            <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                    <CardDescription>{currency}</CardDescription>
+                    <span className="text-lg font-bold">{symbol}</span>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="text-3xl font-bold text-primary">
+                    {symbol}
+                    {formatPrice(price)}
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 
 // Loading Skeleton Component
 function LoadingSkeleton() {
     return (
-        <div className="bitcoin-feed loading">
-            <div className="bitcoin-header">
-                <div className="skeleton skeleton-title" />
-                <div className="skeleton skeleton-badge" />
-            </div>
-            <div className="price-grid">
-                {[1, 2, 3].map((i) => (
-                    <div key={i} className="price-card skeleton-card">
-                        <div className="skeleton skeleton-label" />
-                        <div className="skeleton skeleton-price" />
+        <Card className="max-w-2xl mx-auto">
+            <CardHeader>
+                <div className="flex items-center justify-between">
+                    <div className="space-y-2 flex-1">
+                        <Skeleton className="h-8 w-32" />
+                        <Skeleton className="h-4 w-24" />
                     </div>
-                ))}
-            </div>
-        </div>
+                    <Skeleton className="h-6 w-20" />
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {[1, 2, 3].map((i) => (
+                        <Card key={i}>
+                            <CardHeader className="pb-3">
+                                <Skeleton className="h-4 w-24" />
+                            </CardHeader>
+                            <CardContent>
+                                <Skeleton className="h-8 w-32" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+                <Skeleton className="h-4 w-48 mt-4" />
+            </CardContent>
+        </Card>
     );
 }
 
@@ -106,41 +93,42 @@ function ErrorDisplay({
     onRetry: () => void;
 }) {
     return (
-        <div className="bitcoin-feed error">
-            <div className="error-icon">⚠️</div>
-            <h3>Failed to load Bitcoin prices</h3>
-            <p>{message}</p>
-            <button onClick={onRetry} className="retry-button">
-                Try Again
-            </button>
+        <div className="flex items-center justify-center min-h-[300px] p-6">
+            <Card className="max-w-md w-full border-destructive/50 bg-destructive/5">
+                <CardHeader>
+                    <div className="flex gap-3">
+                        <AlertCircle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                        <div>
+                            <CardTitle className="text-destructive">Failed to load Bitcoin prices</CardTitle>
+                            <CardDescription>{message}</CardDescription>
+                        </div>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={onRetry} variant="destructive" className="w-full">
+                        Try Again
+                    </Button>
+                </CardContent>
+            </Card>
         </div>
     );
 }
 
 // Main Bitcoin Feed Component
 export function BitcoinFeed() {
-    // SWR for data fetching with automatic deduplication
-    const { data, error, isLoading, mutate } = useSWR<BitcoinData>(
-        BITCOIN_API,
-        fetcher,
-        {
-            refreshInterval: 30000,
-            revalidateOnFocus: true,
-            dedupingInterval: 5000,
-        }
-    );
+    const { data, error, isLoading, refetch } = useBitcoinPrice();
 
-    // Early return for loading state
+    // Loading state
     if (isLoading) {
         return <LoadingSkeleton />;
     }
 
-    // Early return for error state
+    // Error state
     if (error) {
-        return <ErrorDisplay message={error.message} onRetry={() => mutate()} />;
+        return <ErrorDisplay message={error.message} onRetry={() => refetch()} />;
     }
 
-    // Early return for no data
+    // No data state
     if (!data) {
         return <LoadingSkeleton />;
     }
@@ -150,46 +138,50 @@ export function BitcoinFeed() {
     const isStale = Date.now() - data.time > 60000;
 
     return (
-        <div className="bitcoin-feed">
-            <div className="bitcoin-header">
-                <div className="header-title">
-                    <span className="bitcoin-icon">₿</span>
-                    <h2>Bitcoin Price Feed</h2>
+        <Card className="max-w-2xl mx-auto">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div className="space-y-2">
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl">₿</span>
+                        <CardTitle>Bitcoin Price Feed</CardTitle>
+                    </div>
+                    <CardDescription>{lastUpdated}</CardDescription>
                 </div>
-                <div className="header-status">
-                    <span className={`status-badge ${isStale ? "stale" : "live"}`}>
+                <div className="flex items-center gap-2">
+                    <Badge variant={isStale ? "secondary" : "default"}>
                         {isStale ? "⏳ Stale" : "🟢 Live"}
-                    </span>
-                    <button
-                        onClick={() => mutate()}
-                        className="refresh-button"
+                    </Badge>
+                    <Button
+                        onClick={() => refetch()}
+                        variant="outline"
+                        size="icon"
                         title="Refresh prices"
                     >
-                        ↻
-                    </button>
+                        <RotateCcw className="h-4 w-4" />
+                    </Button>
                 </div>
-            </div>
+            </CardHeader>
 
-            <div className="price-grid">
-                <PriceCard
-                    currency="US Dollar"
-                    price={data.prices.USD.last}
-                    symbol={data.prices.USD.symbol}
-                />
-                <PriceCard
-                    currency="Euro"
-                    price={data.prices.EUR.last}
-                    symbol={data.prices.EUR.symbol}
-                />
-                <PriceCard
-                    currency="Thai Baht"
-                    price={data.prices.THB.last}
-                    symbol={data.prices.THB.symbol}
-                />
-            </div>
-
-            <div className="last-updated">Last updated: {lastUpdated}</div>
-        </div>
+            <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <PriceCard
+                        currency="US Dollar"
+                        price={data.prices.USD.last}
+                        symbol={data.prices.USD.symbol}
+                    />
+                    <PriceCard
+                        currency="Euro"
+                        price={data.prices.EUR.last}
+                        symbol={data.prices.EUR.symbol}
+                    />
+                    <PriceCard
+                        currency="Thai Baht"
+                        price={data.prices.THB.last}
+                        symbol={data.prices.THB.symbol}
+                    />
+                </div>
+            </CardContent>
+        </Card>
     );
 }
 

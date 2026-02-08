@@ -2,7 +2,6 @@
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import ETFFeed from "../components/etf-feed";
-import "../components/etf-feed.css";
 import type { Route } from "./+types/etf";
 
 // Create a client

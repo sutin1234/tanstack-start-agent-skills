@@ -1,5 +1,4 @@
 import GoldFeed from "../components/gold-feed";
-import "../components/gold-feed.css";
 import type { Route } from "./+types/gold";
 
 export function meta({ }: Route.MetaArgs) {

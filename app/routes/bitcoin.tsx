@@ -1,5 +1,4 @@
 import BitcoinFeed from "../components/bitcoin-feed";
-import "../components/bitcoin-feed.css";
 import type { Route } from "./+types/bitcoin";
 
 export function meta({ }: Route.MetaArgs) {

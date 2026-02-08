@@ -6,7 +6,7 @@
  * - Data Loading with TanStack Query (load-ensure-query-data)
  * - Proper meta tags for SEO
  */
-import { UserList } from "../components/user-list";
+import { UserList } from "../components/user-feed";
 import type { Route } from "./+types/users";
 
 /**
